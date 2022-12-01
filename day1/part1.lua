@@ -1,7 +1,7 @@
 max = 0
 sum = 0
 repeat 
-    l = io.read('*l')
+    l = io.read()
     n = tonumber(l)
     if n then
         sum = sum + n
