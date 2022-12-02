@@ -16,14 +16,11 @@ function numcvt(letter, base_letter)
 end
 
 total_score = 0
-repeat 
-    l = io.read()
-    if l then
-        me = numcvt(string.sub(l, 3, 3), 'X')
-        other = numcvt(string.sub(l, 1, 1), 'A')
-        match_score = get_match_score(me, other)
-        choice_score = me + 1
-        total_score = total_score + match_score + choice_score
-    end
-until l == nil
+for l in io.lines() do
+    me = numcvt(string.sub(l, 3, 3), 'X')
+    other = numcvt(string.sub(l, 1, 1), 'A')
+    match_score = get_match_score(me, other)
+    choice_score = me + 1
+    total_score = total_score + match_score + choice_score
+end
 print(total_score)

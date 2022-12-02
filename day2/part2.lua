@@ -10,14 +10,11 @@ function choose_move_get_match_score(letter, opponent_move)
 end
 
 total_score = 0
-repeat 
-    l = io.read()
-    if l then
-        letter = string.sub(l, 3, 3)
-        other = numcvt(string.sub(l, 1, 1), 'A')
-        me, match_score = choose_move_get_match_score(letter, other)
-        choice_score = me + 1
-        total_score = total_score + match_score + choice_score
-    end
-until l == nil
+for l in io.lines() do
+    letter = string.sub(l, 3, 3)
+    other = numcvt(string.sub(l, 1, 1), 'A')
+    me, match_score = choose_move_get_match_score(letter, other)
+    choice_score = me + 1
+    total_score = total_score + match_score + choice_score
+end
 print(total_score)
