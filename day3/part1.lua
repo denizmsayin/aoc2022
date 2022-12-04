@@ -1,24 +1,12 @@
-function make_counter(str)
-    local tbl = {}
-    for c in str:gmatch'.' do
-        if tbl[c] then
-            tbl[c] = tbl[c] + 1
-        else
-            tbl[c] = 1
-        end
-    end
-    return tbl
-end
-
 function splithalf(str)
     local half = #str // 2
     return str:sub(1, half), str:sub(half + 1)
 end
 
-function find_common(c1, c2)
-    for k, v in pairs(c1) do
-        if c2[k] and c2[k] > 0 then
-            return k
+function find_common(s1, s2)
+    for c in s1:gmatch'.' do
+        if s2:find(c) then
+            return c
         end
     end
     error('Unable to find match')
@@ -35,9 +23,7 @@ end
 total = 0
 for line in io.lines() do
     l, r = splithalf(line)
-    c1 = make_counter(l)
-    c2 = make_counter(r)
-    common = find_common(c1, c2)
+    common = find_common(l, r)
     total = total + get_priority(common)
 end
 print(total)
