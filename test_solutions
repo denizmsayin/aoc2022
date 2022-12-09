@@ -1,0 +1,13 @@
+#! /bin/bash
+
+for luafile in day*.lua; do
+  d=${luafile%%.lua}
+  for i in 1 2; do
+    echo -n "$d part$i: "
+    if diff -w "io/$d/part${i}.txt" <(lua "$luafile" ${i} < "io/$d/input.txt") &> /dev/null; then
+      echo -e $'\e[32m+\e[0m'
+    else
+      echo -e $'\e[31m-\e[0m'
+    fi
+  done
+done
