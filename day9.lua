@@ -25,7 +25,9 @@ local function follow_step(ti, tj, hi, hj)
     end
 end
 
-local function encode_coord(i, j) return tostring(i) .. ',' .. tostring(j) end
+-- 64 bit ints in Lua 5.4, encode with an unsigned bit shift, add a big offset to make positive
+ENC_OFF = 100000
+local function encode_coord(i, j) return ((i + ENC_OFF) << 32) | (j + ENC_OFF) end
 
 local function follow_steps(tail_positions, hi, hj, visited)
     for i = 1, #tail_positions do
