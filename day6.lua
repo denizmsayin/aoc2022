@@ -2,41 +2,48 @@ utils = require('lib/utils')
 
 K = utils.is_part_1() and 4 or 14
 
-function counter_add(counter, k)
-    if counter[k] == nil then
-        counter[k] = 1
+-- Let's use metatables to make an object-style counter
+
+Counter = {}
+Counter.__index = Counter
+
+function Counter.new()
+    local o = { _size = 0 }
+    setmetatable(o, Counter)
+    return o
+end
+
+function Counter:add(k)
+    if self[k] == nil then
+        self[k] = 1
+        self._size = self._size + 1
     else
-        counter[k] = counter[k] + 1
+        self[k] = self[k] + 1
     end
 end
 
-function counter_sub(counter, k)
-    if counter[k] == nil or counter[k] <= 0 then
-        error('Counter logic error')
+function Counter:remove(k)
+    if self[k] == nil or self[k] <= 0 then
+        error(string.format('Decrementing key "%s" which does not exist in the counter', k))
     end
-    counter[k] = counter[k] - 1
+    self[k] = self[k] - 1
+    if self[k] == 0 then
+        self[k] = nil
+        self._size = self._size - 1
+    end
 end
 
-function counter_size(counter)
-    local s = 0
-    for _, v in pairs(counter) do
-        if v > 0 then
-            s = s + 1
-        end
-    end
-    return s
-end
+function Counter:size() return self._size end
 
 stream = io.read()
-counter = {}
+counter = Counter.new()
 for i = 1, #stream do
-    counter_add(counter, stream:sub(i, i))
+    counter:add(stream:sub(i, i))
     if i > K then
-        counter_sub(counter, stream:sub(i-K, i-K))
+        counter:remove(stream:sub(i-K, i-K))
     end
-    if counter_size(counter) == K then
+    if counter:size() == K then
         print(i)
         break
     end
 end
-
