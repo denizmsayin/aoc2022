@@ -1,4 +1,4 @@
-utils = require('lib/utils')
+local utils = require('lib/utils')
 
 K = utils.is_part_1() and 4 or 14
 
@@ -35,8 +35,8 @@ end
 
 function Counter:size() return self._size end
 
-stream = io.read()
-counter = Counter.new()
+local stream = io.read()
+local counter = Counter.new()
 for i = 1, #stream do
     counter:add(stream:sub(i, i))
     if i > K then

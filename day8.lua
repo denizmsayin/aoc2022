@@ -1,6 +1,6 @@
-utils = require('lib/utils')
+local utils = require('lib/utils')
 
-function parse_grid_row(str)
+local function parse_grid_row(str)
     local lst = {}
     for c in str:gmatch'.' do
         table.insert(lst, tonumber(c))
@@ -8,7 +8,7 @@ function parse_grid_row(str)
     return lst
 end
 
-function read_grid()
+local function read_grid()
     local grid = {}
     for line in io.lines() do
         table.insert(grid, parse_grid_row(line))
@@ -16,11 +16,11 @@ function read_grid()
     return grid
 end
 
-function make_grid(rows, cols, value)
+local function make_grid(rows, cols, value)
     local grid = {}
-    for i = 1, rows do
+    for _ = 1, rows do
         local row = {}
-        for j = 1, cols do
+        for _ = 1, cols do
             table.insert(row, value)
         end
         table.insert(grid, row)
@@ -28,14 +28,14 @@ function make_grid(rows, cols, value)
     return grid
 end
 
-function mark_max_updates(grid)
-    local max, upd = -1, 0
+local function mark_max_updates(grid)
+    local max = -1
     local rows, cols = #grid, #grid[1]
-    local marker_grid = make_grid(rows, cols, false) 
+    local marker_grid = make_grid(rows, cols, false)
 
     -- doing this without code duplication is brutal, so guess I won't...
     for i = 1, rows do
-        max, upd = -1, 0
+        max = -1
         for j = 1, cols do
             if grid[i][j] > max then
                 max = grid[i][j]
@@ -44,7 +44,7 @@ function mark_max_updates(grid)
         end
     end
     for i = 1, rows do
-        max, upd = -1, 0
+        max = -1
         for j = cols, 1, -1 do
             if grid[i][j] > max then
                 max = grid[i][j]
@@ -53,7 +53,7 @@ function mark_max_updates(grid)
         end
     end
     for j = 1, cols do
-        max, upd = -1, 0
+        max = -1
         for i = 1, rows do
             if grid[i][j] > max then
                 max = grid[i][j]
@@ -62,7 +62,7 @@ function mark_max_updates(grid)
         end
     end
     for j = 1, cols do
-        max, upd = -1, 0
+        max = -1
         for i = rows, 1, -1 do
             if grid[i][j] > max then
                 max = grid[i][j]
@@ -74,9 +74,9 @@ function mark_max_updates(grid)
     return marker_grid
 end
 
-function scenic_score(grid, row, col)
+local function scenic_score(grid, row, col)
     local rows, cols = #grid, #grid[1]
-    
+
     -- edge check
     if row == 1 or row == rows or col == 1 or col == cols then
         return 0
@@ -111,7 +111,7 @@ function scenic_score(grid, row, col)
     return score
 end
 
-function best_scenic_score(grid)
+local function best_scenic_score(grid)
     local best = 0
     for i = 1, #grid do
         for j = 1, #grid[1] do
@@ -124,10 +124,10 @@ function best_scenic_score(grid)
     return best
 end
 
-grid = read_grid()
+local grid = read_grid()
 if utils.is_part_1() then
-    marker = mark_max_updates(grid)
-    count = 0
+    local marker = mark_max_updates(grid)
+    local count = 0
     for i = 1, #marker do
         for j = 1, #marker[i] do
             if marker[i][j] then

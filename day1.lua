@@ -1,10 +1,10 @@
-utils = require('lib/utils')
+local utils = require('lib/utils')
 
-sum = 0
-list = {}
-repeat 
-    l = io.read()
-    n = tonumber(l)
+local sum = 0
+local list = {}
+repeat
+    local l = io.read()
+    local n = tonumber(l)
     if n then
         sum = sum + n
     else

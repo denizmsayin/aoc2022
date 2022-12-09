@@ -1,11 +1,12 @@
-utils = require('lib/utils')
+local utils = require('lib/utils')
 
-function spsplit(string)
-    left, right = string:match('([^%s]+)%s*(.*)')
+CAPACITY = 70000000
+TARGET_SPACE = 30000000
+
+local function spsplit(string)
+    local left, right = string:match('([^%s]+)%s*(.*)')
     return left, right
 end
-
-function new_file_table(size) return  end
 
 File = {}
 
@@ -40,11 +41,12 @@ end
 
 
 -- Parsing the terminal output and creating the hierarchy
-root = Dir.new('root')
-current = nil
+local root = Dir.new('root')
+local current = nil
 for line in io.lines() do
-    word, target = spsplit(line)
+    local word, target = spsplit(line)
     if word == '$' then
+        local cmd
         cmd, target = spsplit(target)
         if cmd == 'cd' then
             if target == '/' then
@@ -58,14 +60,14 @@ for line in io.lines() do
     elseif word == 'dir' then
         current:add_file(Dir.new(target))
     else
-        file_size = tonumber(word)
+        local file_size = tonumber(word)
         current:add_file(File.new(target, file_size))
     end
 end
 
 -- Applying the algorithm to the file list
 if utils.is_part_1() then
-    total = 0
+    local total = 0
     for _, f in ipairs(Dir.list) do
         if f.size <= 100000 then
             total = total + f.size
@@ -73,11 +75,9 @@ if utils.is_part_1() then
     end
     print(total)
 else
-    CAPACITY = 70000000
-    TARGET_SPACE = 30000000
-    unused_space = CAPACITY - root.size -- root is added last
-    space_to_free = TARGET_SPACE - unused_space
-    min_so_far = CAPACITY
+    local unused_space = CAPACITY - root.size -- root is added last
+    local space_to_free = TARGET_SPACE - unused_space
+    local min_so_far = CAPACITY
     for _, f in ipairs(Dir.list) do
         if f.size >= space_to_free and f.size < min_so_far then
             min_so_far = f.size
