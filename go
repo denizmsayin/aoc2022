@@ -28,11 +28,7 @@ fi
 daylink="https://adventofcode.com/2022/day/$day"
 nohup open '/Applications/Google Chrome.app/' "$daylink" &> /dev/null & 
 
-target_dir="../io/day$day"
+target_dir="io/day$day"
 mkdir -p "$target_dir"
 target_file="$target_dir/input.txt"
-if [ -e "$target_file" ]; then
-  echo "Target file already exists, did not fetch."
-else
-  curl --cookie "$(cat cookie.txt)" "$daylink/input" -o "$target_file"
-fi
+curl --cookie "$(cat cookie.txt)" "$daylink/input" -o "$target_file"

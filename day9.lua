@@ -2,24 +2,20 @@ local utils = require('lib/utils')
 
 NUM_TAILS = utils.is_part_1() and 1 or 9 -- different tail size depending on part
 
-local function sign(x) return x > 0 and 1 or -1 end
+local function sign(x)
+    if x > 0 then
+        return 1
+    elseif x == 0 then
+        return 0
+    else
+        return -1
+    end
+end
 
 local function follow_step(ti, tj, hi, hj)
     local di, dj = hi - ti, hj - tj
     if -1 <= di and di <= 1 and -1 <= dj and dj <= 1 then
         return ti, tj
-    elseif di == 0 then
-        if dj == 2 then
-            return ti, tj + 1
-        else
-            return ti, tj - 1
-        end
-    elseif dj == 0 then
-        if di == 2 then
-            return ti + 1, tj
-        else
-            return ti - 1, tj
-        end
     else -- diagonal case
         return ti + sign(di), tj + sign(dj)
     end
