@@ -16,105 +16,74 @@ local function read_grid()
     return grid
 end
 
-local function make_grid(rows, cols, value)
-    local grid = {}
-    for _ = 1, rows do
-        local row = {}
-        for _ = 1, cols do
-            table.insert(row, value)
-        end
-        table.insert(grid, row)
-    end
-    return grid
+local function in_bounds(grid, i, j)
+    return 1 <= i and i <= #grid and 1 <= j and j <= #grid[i]
 end
 
-local function mark_max_updates(grid)
-    local max = -1
-    local rows, cols = #grid, #grid[1]
-    local marker_grid = make_grid(rows, cols, false)
+OFFSETS = { {0, 1}, {0, -1}, {1, 0}, {-1, 0} }
 
-    -- doing this without code duplication is brutal, so guess I won't...
-    for i = 1, rows do
-        max = -1
-        for j = 1, cols do
-            if grid[i][j] > max then
-                max = grid[i][j]
-                marker_grid[i][j] = true
+local function is_visible(grid, ipos, jpos)
+    local value = grid[ipos][jpos]
+    for _, offset in ipairs(OFFSETS) do
+        local ioff, joff = table.unpack(offset)
+        local i, j = ipos + ioff, jpos + joff
+        local side_visible = true
+        while in_bounds(grid, i, j) do
+            if grid[i][j] >= value then
+                side_visible = false
+                break
             end
+            i, j = i + ioff, j + joff
+        end
+        if side_visible then
+            return true
         end
     end
-    for i = 1, rows do
-        max = -1
-        for j = cols, 1, -1 do
-            if grid[i][j] > max then
-                max = grid[i][j]
-                marker_grid[i][j] = true
-            end
-        end
-    end
-    for j = 1, cols do
-        max = -1
-        for i = 1, rows do
-            if grid[i][j] > max then
-                max = grid[i][j]
-                marker_grid[i][j] = true
-            end
-        end
-    end
-    for j = 1, cols do
-        max = -1
-        for i = rows, 1, -1 do
-            if grid[i][j] > max then
-                max = grid[i][j]
-                marker_grid[i][j] = true
-            end
-        end
-    end
-
-    return marker_grid
+    return false
 end
 
-local function scenic_score(grid, row, col)
-    local rows, cols = #grid, #grid[1]
-
-    -- edge check
-    if row == 1 or row == rows or col == 1 or col == cols then
-        return 0
+local function count_visible(grid)
+    local c = 0
+    for i = 1, #grid do
+        for j = 1, #grid[i] do
+            if is_visible(grid, i, j) then
+                c = c + 1
+            end
+        end
     end
+    return c
+end
 
+local function scenic_score(grid, ipos, jpos)
+    local value = grid[ipos][jpos]
     local score = 1
-    -- doing this without code duplication is brutal, so guess I won't..
-    for j = col + 1, cols do
-        if j == cols or grid[row][j] >= grid[row][col] then
-            score = score * (j - col)
+    for _, offset in ipairs(OFFSETS) do
+        local ioff, joff = table.unpack(offset)
+        local i, j = ipos + ioff, jpos + joff
+        local mult = 0
+        while in_bounds(grid, i, j) do
+            mult = mult + 1
+            if grid[i][j] >= value then
+                break
+            end
+            i, j = i + ioff, j + joff
+        end
+
+        if mult == 0 then
+            score = 0
             break
         end
+
+        score = score * mult
     end
-    for j = col - 1, 1, -1 do
-        if j == 1 or grid[row][j] >= grid[row][col] then
-            score = score * (col - j)
-            break
-        end
-    end
-    for i = row + 1, rows do
-        if i == rows or grid[i][col] >= grid[row][col] then
-            score = score * (i - row)
-            break
-        end
-    end
-    for i = row - 1, 1, -1 do
-        if i == 1 or grid[i][col] >= grid[row][col] then
-            score = score * (row - i)
-            break
-        end
-    end
+
     return score
 end
 
 local function best_scenic_score(grid)
     local best = 0
     for i = 1, #grid do
-        for j = 1, #grid[1] do
+        for j = 1, #grid[i] do
             local score = scenic_score(grid, i, j)
             if score > best then
                 best = score
@@ -125,17 +94,5 @@ local function best_scenic_score(grid)
 end
 
 local grid = read_grid()
-if utils.is_part_1() then
-    local marker = mark_max_updates(grid)
-    local count = 0
-    for i = 1, #marker do
-        for j = 1, #marker[i] do
-            if marker[i][j] then
-                count = count + 1
-            end
-        end
-    end
-    print(count)
-else
-    print(best_scenic_score(grid))
-end
+local func = utils.is_part_1() and count_visible or best_scenic_score
+print(func(grid))
