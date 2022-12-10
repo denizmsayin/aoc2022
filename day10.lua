@@ -30,11 +30,8 @@ else
     for _ = 1, 6 do
         for j = 0, 39 do
             local x = values[cycle]
-            if x == j or x - 1 == j or x + 1 == j then
-                io.write('#')
-            else
-                io.write('.')
-            end
+            local char = (x == j or x - 1 == j or x + 1 == j) and '#' or '.'
+            io.write(char)
             cycle = cycle + 1
         end
         io.write('\n')
