@@ -1,6 +1,6 @@
 local utils = require('lib/utils')
 
-K = utils.is_part_1() and 4 or 14
+K = utils.IS_PART_1 and 4 or 14
 
 -- Let's use metatables to make an object-style counter
 

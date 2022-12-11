@@ -17,7 +17,7 @@ local function overlaps(s1, e1, s2, e2)
     return s2 <= e1 and s1 <= e2
 end
 
-local check = utils.is_part_1() and contains2 or overlaps -- choose comparator
+local check = utils.IS_PART_1 and contains2 or overlaps -- choose comparator
 local total = 0
 for line in io.lines() do
     local s1, e1, s2, e2 = parse_ranges(line)

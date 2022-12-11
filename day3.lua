@@ -23,7 +23,7 @@ local function get_priority(char)
 end
 
 local total = 0
-if utils.is_part_1() then
+if utils.IS_PART_1 then
     for line in io.lines() do
         local l, r = splithalf(line)
         local common = find_common(l, r)

@@ -53,7 +53,7 @@ local function move_batch(stacks, n, from, to)
     end
 end
 
-local apply_move = utils.is_part_1() and move_one_by_one or move_batch -- moving function choice
+local apply_move = utils.IS_PART_1 and move_one_by_one or move_batch -- moving function choice
 local stacks = read_input_stacks()
 for line in io.lines() do -- rest of the move lines
     local n, from, to = line:match('move (%d+) from (%d+) to (%d+)')

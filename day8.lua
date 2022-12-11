@@ -94,5 +94,5 @@ local function best_scenic_score(grid)
 end
 
 local grid = read_grid()
-local func = utils.is_part_1() and count_visible or best_scenic_score
+local func = utils.IS_PART_1 and count_visible or best_scenic_score
 print(func(grid))

@@ -65,7 +65,7 @@ local function play_round(monkeys)
         while #monkey.items > 0 do
             local item = table.remove(monkey.items)
             item = eval_op(item, monkey.update)
-            if utils.is_part_1() then
+            if utils.IS_PART_1 then
                 item = item // 3
             else
                 item = item % lcm
@@ -83,7 +83,7 @@ while true do
     table.insert(monkeys, m)
 end
 
-local num_rounds = utils.is_part_1() and 20 or 10000
+local num_rounds = utils.IS_PART_1 and 20 or 10000
 for _ = 1, num_rounds do
     play_round(monkeys)
 end

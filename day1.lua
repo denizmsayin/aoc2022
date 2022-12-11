@@ -13,7 +13,7 @@ repeat
     end
 until l == nil
 table.sort(list) -- inefficient, but does the trick; ideally a partial sort
-if utils.is_part_1() then
+if utils.IS_PART_1 then
     print(list[#list])
 else
     print(list[#list] + list[#list-1] + list[#list-2])

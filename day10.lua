@@ -18,7 +18,7 @@ local function calculate_register_values()
 end
 
 local values = calculate_register_values()
-if utils.is_part_1() then
+if utils.IS_PART_1 then
     local cycles = { 20, 60, 100, 140, 180, 220 }
     local sum = 0
     for _, cycle in ipairs(cycles) do

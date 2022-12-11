@@ -26,7 +26,7 @@ local total_score = 0
 for l in io.lines() do
     local opponent_move = numcvt(l:sub(1, 1), 'A')
     local my_move, match_score
-    if utils.is_part_1() then
+    if utils.IS_PART_1 then
         my_move = numcvt(l:sub(3, 3), 'X')
         match_score = get_match_score(my_move, opponent_move)
     else

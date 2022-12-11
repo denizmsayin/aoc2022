@@ -1,6 +1,6 @@
 local utils = require('lib/utils')
 
-NUM_TAILS = utils.is_part_1() and 1 or 9 -- different tail size depending on part
+NUM_TAILS = utils.IS_PART_1 and 1 or 9 -- different tail size depending on part
 
 local function sign(x)
     if x > 0 then

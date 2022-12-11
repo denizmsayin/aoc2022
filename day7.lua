@@ -66,7 +66,7 @@ for line in io.lines() do
 end
 
 -- Applying the algorithm to the file list
-if utils.is_part_1() then
+if utils.IS_PART_1 then
     local total = 0
     for _, f in ipairs(Dir.list) do
         if f.size <= 100000 then
