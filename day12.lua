@@ -57,6 +57,9 @@ local function calculate_all_costs(grid, costs)
     local queue = { {ei, ej} }
     costs[ei][ej] = 0
     while #queue > 0 do
+        -- It's possible to avoid the bad performance here by using 'rounds' of
+        -- BFS. i.e. Use two lists, empty the first one, fill the second one,
+        -- and swap them around for the next round. But it's already fast...
         local ti, tj = table.unpack(table.remove(queue, 1))
         local cost = costs[ti][tj]
         for _, off in ipairs(OFFSETS) do
