@@ -10,6 +10,8 @@ exec 0<&-
 if [ ${PIPESTATUS[0]} != 0 ]; then
   echo "*** At least one test failed, commit aborted! ***"
   exit 1 # tests failed, do not commit
+else
+  echo "Tests successful! Committing with updated README..."
 fi
 
 git add README.md
