@@ -8,6 +8,7 @@ if ! [ -t 0 ]; then # terminal check, to output differently for README
   echo '```diff'
 fi
 
+ret=0
 for di in {1..25}; do
   d=day"$di"
   luafile="$d".lua
@@ -18,14 +19,15 @@ for di in {1..25}; do
           printf "%s\tpart%d: " "$d" "$i"
           echo -ne $'\e[32m+\e[0m'
         else
-          printf "+ %s\tpart%d: OK" "$d" "$i"
+          printf "%s %s\tpart%d: OK" "+" "$d" "$i"
         fi
       else
+        ret=1 # fail the return
         if [ -t 0 ]; then
           printf "%s\tpart%d: " "$d" "$i"
           echo -ne $'\e[31m+\e[0m'
         else
-          printf "- %s\tpart%d: FAIL" "$d" "$i"
+          printf "%s %s\tpart%d: FAIL" "-" "$d" "$i"
         fi
       fi
       elapsed=$(head -1 "$TIMEF" | awk '{ print $2; }')
@@ -37,3 +39,5 @@ done
 if ! [ -t 0 ]; then
   echo '```'
 fi
+
+exit $ret

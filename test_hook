@@ -6,7 +6,11 @@
 
 cp readme_template.md README.md
 exec 0<&-
-./test_solutions >> README.md
+./test_solutions | tee -a README.md
+if [ ${PIPESTATUS[0]} != 0 ]; then
+  echo "*** At least one test failed, commit aborted! ***"
+  exit 1 # tests failed, do not commit
+fi
 
 git add README.md
 
