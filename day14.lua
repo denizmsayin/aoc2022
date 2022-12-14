@@ -100,31 +100,27 @@ end
 
 local J_OFFSETS = { 0, -1, 1 } -- offsets to check to move down
 
-local function sim_step(grid, m, step, source_j)
-    -- Use a pipelined approach:
-    -- Simulate each sand grain in the active list. Easy peasy.
-    -- Remember: -1 is empty, 0 is path, > 0 are grains, with the number being the grain ID
-    -- > 0 is kind of an artifact from the previous implementation, just setting to 1 would work
-    -- Return: done if steady state reached
-    -- Using 1, 2, 3 instead of .gid, .i, .j for dubious efficiency atm
+local function sim_step(grid, m, prev_pos_stack)
+    -- Use a pipelined SPEEDY approach:
+    -- Store path of last grain in stack, start from previous step
+    -- Remember: -1 is empty, 0 is path, 1 are grains
+    -- Ret: i where the last sand grain stopped. m works for part 2 as sentinel, 0 if stk empty
 
-    -- For part 2, check for the source being blocked
-    if utils.IS_PART_2 and grid[1][source_j] >= 0 then
-        return true
+    if prev_pos_stack[1] == nil then
+        return 0
     end
 
     -- Otherwise, simulate by dropping a grain
-
-    local i, j = 1, source_j
-    -- Try to move the grain down
+    local i, j = table.unpack(table.remove(prev_pos_stack))
     local moved = true
     local ii, jj
-    while moved and i < m do
+    while i < m and moved do
         ii = i + 1
         moved = false
         for _, joff in ipairs(J_OFFSETS) do
             jj = j + joff
             if grid[ii][jj] < 0 then
+                table.insert(prev_pos_stack, {i, j})
                 i, j = ii, jj
                 moved = true
                 break
@@ -132,11 +128,9 @@ local function sim_step(grid, m, step, source_j)
         end
     end
 
-    if i < m then -- mark the stopped grain
-        grid[i][j] = step
-    end
+    grid[i][j] = 1
 
-    return i >= m -- will reach m when falling to abyss
+    return i
 end
 
 local paths = read_paths()
@@ -163,9 +157,11 @@ local grid = filled_grid(m, n, -1)
 mark_paths(grid, paths)
 
 -- Simply drop one grain all the way to the end. Makes visualization harder, but oh well!
-local source_j = 500 - joff
 local step = 0
-while not sim_step(grid, m, step, source_j) do
+local prev_pos_stack = {{1, 500 - joff}}
+local stop_i = -1
+while not (utils.IS_PART_1 and stop_i == m or utils.IS_PART_2 and stop_i == 0) do
+    stop_i = sim_step(grid, m, prev_pos_stack)
     step = step + 1
 end
-print(step)
+print(step - 1)
