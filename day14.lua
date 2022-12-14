@@ -20,7 +20,7 @@ local function find_imax(paths)
     local imax = 0
     for _, path in ipairs(paths) do
         for _, seg in ipairs(path) do
-            local i, j = table.unpack(seg)
+            local i = seg[1]
             if i > imax then
                 imax = i
             end
@@ -31,9 +31,9 @@ end
 
 local function filled_grid(m, n, v)
     local grid = {}
-    for i = 1, m do
+    for _ = 1, m do
         local row = {}
-        for j = 1, n do
+        for _ = 1, n do
             table.insert(row, v)
         end
         table.insert(grid, row)
@@ -76,60 +76,66 @@ local function mark_paths(grid, paths)
     end
 end
 
-local function print_grid(grid)
+local function count_stopped_grains(grid)
+    local c = 0
     for _, row in ipairs(grid) do
         for _, v in ipairs(row) do
-            local ch = (v < 0 and '.' or (v == 0 and '#' or 'o'))
-            io.write(ch)
+            if v > 0 then
+                c = c + 1
+            end
         end
-        io.write('\n')
     end
+    return c
 end
 
 local OFFSETS = { {1, 0}, {1, -1}, {1, 1} } -- offsets to check to move down
 
-local function sim_step(grid, m, n, step, sandpos)
+local function sim_step(grid, m, grains, step, source_j)
     -- Use a pipelined approach:
-    -- Start from lowest cell and go up, simulate sand you come across
-    -- Finally, add one grain from the top
-    -- If a grain falls into the abyss, we're done
+    -- Simulate each sand grain in the active list. Easy peasy.
     -- Remember: -1 is empty, 0 is path, > 0 are grains, with the number being the grain ID
+    -- > 0 is kind of an artifact from the previous implementation, just setting to 1 would work
+    -- Return: done, next_grains if steady state reached
+    -- Using 1, 2, 3 instead of .gid, .i, .j for dubious efficiency atm
 
-    -- Special treatment for last row in part 1:
+    local next_grains = {} -- keep the queue for next time
+
+    -- For part 1, check for the first grain being at the edge
     if utils.IS_PART_1 then
-        for j = 1, n do
-            if grid[m][j] > 0 then
-                return grid[m][j]
-            end
+        local first_grain = grains[1]
+        if first_grain ~= nil and first_grain[2] == m then
+            return true, next_grains
         end
     end
 
-    -- Simulate the rest
-    for i = m - 1, 1, -1 do
-        -- All the rest go through the rules
-        for j = 2, n - 1 do
-            local v = grid[i][j]
-            if v > 0 then
-                -- TODO: could cache resting sand grains for speed
-                for _, off in ipairs(OFFSETS) do
-                    local ii, jj = i + off[1], j + off[2]
-                    if grid[ii][jj] < 0 then
-                        grid[ii][jj] = v
-                        grid[i][j] = -1
-                        break
-                    end
-                end
+    -- For part 2, check for the source being blocked
+    if utils.IS_PART_2 and grid[1][source_j] >= 0 then
+        return true, next_grains
+    end
+
+    -- Otherwise, simulate
+    -- The start will always contain the lowest moving grain, go from 1 to end
+    for _, grain in ipairs(grains) do
+        local gid, i, j = table.unpack(grain)
+        local moved = false
+
+        -- Try to move the grain down
+        for _, off in ipairs(OFFSETS) do
+            local ii, jj = i + off[1], j + off[2]
+            if grid[ii][jj] < 0 then
+                table.insert(next_grains, {gid, ii, jj}) -- reusing might be faster
+                moved = true
+                break
             end
+        end
+
+        if not moved then -- freeze on the grid, do not consider next time
+            grid[i][j] = gid
         end
     end
 
-    if utils.IS_PART_2 and grid[1][sandpos] > 0 then
-        return step -- first grain that could not enter
-    end
-
-    grid[1][sandpos] = step -- drop some sand
-
-    return nil
+    table.insert(next_grains, {step, 1, source_j}) -- new sand grain
+    return false, next_grains
 end
 
 local paths = read_paths()
@@ -151,41 +157,51 @@ local jspan = jmax - jmin + 3 -- 2 to sentinel
 local joff = jmin - 2 -- to map all j's to 1
 offset_paths(paths, 1, -joff) -- increase all i by 1 too for lua indexing
 
-local m, n = imax + 1, jspan
+local m, n = imax + 1, jspan -- imax + 1 to make space for the grain at 0
 local grid = filled_grid(m, n, -1)
 mark_paths(grid, paths)
-local sandpos = 500 - joff
+
+-- To optimize a bit, track a pipelined list of moving sand grains
+-- Instead of looping over the whole grid at every step
+-- Resting grains will be removed and inserted to the grid
+local done, grains = false, {}
+local source_j = 500 - joff
 local step = 1
 while true do
-    local last = sim_step(grid, m, n, step, sandpos)
-    if last then
-        print(last - 1) -- last is the first one who fell
+    done, grains = sim_step(grid, m, grains, step, source_j)
+    if done then
+        print(count_stopped_grains(grid))
         break
-    end
-    if step % 100 == 0 then
-        print_grid(grid)
-        print()
     end
     step = step + 1
 end
--- Printer for debugging
+
 --[[
-function Print_item(item)
-    local t = type(item)
-    if t == 'number' then
-        io.write(tostring(item))
-    else
-        Print_list(item)
+-- Printer for debugging and fun
+local function copy_grid(grid)
+    local new = {}
+    for _, row in ipairs(grid) do
+        local new_row = {}
+        for _, item in ipairs(row) do
+            table.insert(new_row, item)
+        end
+        table.insert(new, new_row)
     end
+    return new
 end
 
-function Print_list(list)
-    io.write('[')
-    for i = 1, #list - 1 do
-        Print_item(list[i])
-        io.write(',')
+local function print_grid(grid, grains)
+    grid = copy_grid(grid)
+    for _, grain in ipairs(grains) do
+        local gid, i, j = table.unpack(grain)
+        grid[i][j] = gid
     end
-    Print_item(list[#list])
-    io.write(']')
+    for _, row in ipairs(grid) do
+        for _, v in ipairs(row) do
+            local ch = (v < 0 and '.' or (v == 0 and '#' or 'o'))
+            io.write(ch)
+        end
+        io.write('\n')
+    end
 end
 ]]
