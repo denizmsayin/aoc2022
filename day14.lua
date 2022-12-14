@@ -1,5 +1,15 @@
 local utils = require('lib/utils')
 
+local function print_grid(grid)
+    for _, row in ipairs(grid) do
+        for _, v in ipairs(row) do
+            local ch = (v < 0 and '.' or (v == 0 and '#' or 'o'))
+            io.write(ch)
+        end
+        io.write('\n')
+    end
+end
+
 local function parse_path(line)
     local segs = {}
     for j, i in line:gmatch'(%d+),(%d+)' do
@@ -88,54 +98,45 @@ local function count_stopped_grains(grid)
     return c
 end
 
-local OFFSETS = { {1, 0}, {1, -1}, {1, 1} } -- offsets to check to move down
+local J_OFFSETS = { 0, -1, 1 } -- offsets to check to move down
 
-local function sim_step(grid, m, grains, step, source_j)
+local function sim_step(grid, m, step, source_j)
     -- Use a pipelined approach:
     -- Simulate each sand grain in the active list. Easy peasy.
     -- Remember: -1 is empty, 0 is path, > 0 are grains, with the number being the grain ID
     -- > 0 is kind of an artifact from the previous implementation, just setting to 1 would work
-    -- Return: done, next_grains if steady state reached
+    -- Return: done if steady state reached
     -- Using 1, 2, 3 instead of .gid, .i, .j for dubious efficiency atm
-
-    local next_grains = {} -- keep the queue for next time
-
-    -- For part 1, check for the first grain being at the edge
-    if utils.IS_PART_1 then
-        local first_grain = grains[1]
-        if first_grain ~= nil and first_grain[2] == m then
-            return true, next_grains
-        end
-    end
 
     -- For part 2, check for the source being blocked
     if utils.IS_PART_2 and grid[1][source_j] >= 0 then
-        return true, next_grains
+        return true
     end
 
-    -- Otherwise, simulate
-    -- The start will always contain the lowest moving grain, go from 1 to end
-    for _, grain in ipairs(grains) do
-        local gid, i, j = table.unpack(grain)
-        local moved = false
+    -- Otherwise, simulate by dropping a grain
 
-        -- Try to move the grain down
-        for _, off in ipairs(OFFSETS) do
-            local ii, jj = i + off[1], j + off[2]
+    local i, j = 1, source_j
+    -- Try to move the grain down
+    local moved = true
+    local ii, jj
+    while moved and i < m do
+        ii = i + 1
+        moved = false
+        for _, joff in ipairs(J_OFFSETS) do
+            jj = j + joff
             if grid[ii][jj] < 0 then
-                table.insert(next_grains, {gid, ii, jj}) -- reusing might be faster
+                i, j = ii, jj
                 moved = true
                 break
             end
         end
-
-        if not moved then -- freeze on the grid, do not consider next time
-            grid[i][j] = gid
-        end
     end
 
-    table.insert(next_grains, {step, 1, source_j}) -- new sand grain
-    return false, next_grains
+    if i < m then -- mark the stopped grain
+        grid[i][j] = step
+    end
+
+    return i >= m -- will reach m when falling to abyss
 end
 
 local paths = read_paths()
@@ -161,47 +162,10 @@ local m, n = imax + 1, jspan -- imax + 1 to make space for the grain at 0
 local grid = filled_grid(m, n, -1)
 mark_paths(grid, paths)
 
--- To optimize a bit, track a pipelined list of moving sand grains
--- Instead of looping over the whole grid at every step
--- Resting grains will be removed and inserted to the grid
-local done, grains = false, {}
+-- Simply drop one grain all the way to the end. Makes visualization harder, but oh well!
 local source_j = 500 - joff
-local step = 1
-while true do
-    done, grains = sim_step(grid, m, grains, step, source_j)
-    if done then
-        print(count_stopped_grains(grid))
-        break
-    end
+local step = 0
+while not sim_step(grid, m, step, source_j) do
     step = step + 1
 end
-
---[[
--- Printer for debugging and fun
-local function copy_grid(grid)
-    local new = {}
-    for _, row in ipairs(grid) do
-        local new_row = {}
-        for _, item in ipairs(row) do
-            table.insert(new_row, item)
-        end
-        table.insert(new, new_row)
-    end
-    return new
-end
-
-local function print_grid(grid, grains)
-    grid = copy_grid(grid)
-    for _, grain in ipairs(grains) do
-        local gid, i, j = table.unpack(grain)
-        grid[i][j] = gid
-    end
-    for _, row in ipairs(grid) do
-        for _, v in ipairs(row) do
-            local ch = (v < 0 and '.' or (v == 0 and '#' or 'o'))
-            io.write(ch)
-        end
-        io.write('\n')
-    end
-end
-]]
+print(step)

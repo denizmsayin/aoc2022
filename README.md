@@ -31,6 +31,6 @@ You can see how my automated tests are looking right now, with the time measured
 + day12	part2: OK (0.00s)
 + day13	part1: OK (0.00s)
 + day13	part2: OK (0.00s)
-+ day14	part1: OK (0.03s)
-+ day14	part2: OK (0.79s)
++ day14	part1: OK (0.01s)
++ day14	part2: OK (0.23s)
 ```
