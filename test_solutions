@@ -4,19 +4,36 @@ TIMEF=.test_time_file
 
 trap "rm -f $TIMEF" EXIT
 
+if ! [ -t 0 ]; then # terminal check, to output differently for README
+  echo '```diff'
+fi
+
 for di in {1..25}; do
   d=day"$di"
   luafile="$d".lua
   if [ -e "$luafile" ]; then
     for i in 1 2; do
-      printf "%s\tpart%d: " "$d" "$i"
       if diff -w "io/$d/part${i}.txt" <((time -p lua "$luafile" ${i} < "io/$d/input.txt") 2>$TIMEF) &> /dev/null; then
-        echo -ne $'\e[32m+\e[0m'
+        if [ -t 0 ]; then
+          printf "%s\tpart%d: " "$d" "$i"
+          echo -ne $'\e[32m+\e[0m'
+        else
+          printf "+ %s\tpart%d: OK" "$d" "$i"
+        fi
       else
-        echo -ne $'\e[31m-\e[0m'
+        if [ -t 0 ]; then
+          printf "%s\tpart%d: " "$d" "$i"
+          echo -ne $'\e[31m+\e[0m'
+        else
+          printf "- %s\tpart%d: FAIL" "$d" "$i"
+        fi
       fi
       elapsed=$(head -1 "$TIMEF" | awk '{ print $2; }')
       printf " (%ss)\n" "$elapsed"
     done
   fi
 done
+
+if ! [ -t 0 ]; then
+  echo '```'
+fi

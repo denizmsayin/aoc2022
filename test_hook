@@ -1,0 +1,12 @@
+#! /bin/bash
+
+# symlink this into .git/hooks as pre-commit
+# i.e. $ ln -s test_hook .git/hooks/pre-commit
+
+
+cp readme_template.md README.md
+exec 0<&-
+./test_solutions >> README.md
+
+git add README.md
+

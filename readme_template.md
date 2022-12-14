@@ -1,0 +1,6 @@
+# aoc2022
+
+Advent of Code 2022 with Lua. More comments later...
+
+You can see how my automated tests are looking right now, with the time measured somewhat imprecisely by `time -p`. I usually try to make the solutions _fast_ if they are not already...
+
