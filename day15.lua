@@ -166,31 +166,42 @@ local function chop_ranges_(ranges, slim, elim)
     end
 end
 
-local y = 2000000 -- 10 for example
+local function brute_available(sensors, x, y)
+    local p = new_point(x, y)
+    for _, sensor in ipairs(sensors) do
+        local dist = get_manhattan(sensor.beacon, p)
+        if dist <= sensor.beacon_dist then
+            return false
+        end
+    end
+    return true
+end
+
+local Y = 2000000 -- 10 for example
 
 if utils.IS_PART_1 then
     local sensors = read_sensors()
     local beacon_set = collect_beacon_set(sensors)
     -- local ranges = collect_sensor_limits_at(sensors, 2000000)
-    local ranges = merge_ranges(collect_sensor_limits_at(sensors, y))
-    local existing = count_known_beacons_in(beacon_set, ranges, y)
+    local ranges = merge_ranges(collect_sensor_limits_at(sensors, Y))
+    local existing = count_known_beacons_in(beacon_set, ranges, Y)
     local impossible = sum_spans(ranges)
     print(impossible - existing)
 else
-    local ylim = 2 * y
+    local ylim = 2 * Y
+    local full_span = ylim + 1
     local sensors = read_sensors()
-    local beacon_set = collect_beacon_set(sensors)
     for y = 0, ylim do
         -- local ranges = collect_sensor_limits_at(sensors, 2000000)
         local ranges = collect_sensor_limits_at(sensors, y)
         ranges = merge_ranges(ranges)
         chop_ranges_(ranges, 0, ylim)
-        local existing = 0--count_known_beacons_in(beacon_set, ranges, y)
+        -- local existing = 0--count_known_beacons_in(beacon_set, ranges, y)
         local impossible = sum_spans(ranges)
-        if impossible < ylim + 1 then
-            print(y, impossible - existing)
-            print_ranges(ranges)
-            print()
+        if impossible == full_span - 1 then -- one space!
+            local x = ranges[1][2] + 1-- should have two ranges (0, a), (a + 2, ylim)
+            print(4000000 * x + y)
+            break
         end
     end
 end

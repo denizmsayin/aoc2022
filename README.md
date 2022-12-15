@@ -67,4 +67,5 @@ ln test_hook .git/hooks/pre-commit
 + day14	part1: OK (0.00s)
 + day14	part2: OK (0.01s)
 + day15	part1: OK (0.00s)
++ day15	part2: OK (18.20s)
 ```
