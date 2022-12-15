@@ -1,4 +1,4 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
 
 -- rock 0, paper 1, scissors 2
 

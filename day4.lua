@@ -1,4 +1,4 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
 
 local function parse_ranges(line)
     local s1, e1, s2, e2 = line:match('(%d+)-(%d+),(%d+)-(%d+)')

@@ -3,15 +3,25 @@
 # symlink this into .git/hooks as pre-commit
 # i.e. $ ln -s test_hook .git/hooks/pre-commit
 
-
 cp readme_template.md README.md
 exec 0<&-
-./test_solutions | tee -a README.md
+
+LUA=lua ./test_solutions | tee -a README.md
 if [ ${PIPESTATUS[0]} != 0 ]; then
   echo "*** At least one test failed, commit aborted! ***"
   exit 1 # tests failed, do not commit
 else
-  echo "Tests successful! Committing with updated README..."
+  echo "Lua tests successful! On to LuaJIT..."
+fi
+
+echo >> README.md
+
+LUA=luajit ./test_solutions | tee -a README.md
+if [ ${PIPESTATUS[0]} != 0 ]; then
+  echo "*** At least one test failed, commit aborted! ***"
+  exit 1 # tests failed, do not commit
+else
+  echo "LuaJIT tests also successful! Committing with updated README..."
 fi
 
 git add README.md

@@ -1,4 +1,4 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
 
 -- Ultra hardcore (!) unprincipled iterative hand-rolled parser
 -- Cool code simplification: inserting nil is the same

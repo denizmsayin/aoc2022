@@ -1,4 +1,4 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
 
 local function calculate_register_values()
     local values = {}

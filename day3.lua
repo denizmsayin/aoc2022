@@ -1,7 +1,7 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
 
 local function splithalf(str)
-    local half = #str // 2
+    local half = #str / 2
     return str:sub(1, half), str:sub(half + 1)
 end
 

@@ -1,4 +1,4 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
 
 -- Storing item lists in monkey and passing them around resizeable arrays
 -- seems to make the whole thing slow down a little (0.12s). 
@@ -24,14 +24,6 @@ local function parse_op(op_string)
         return { plus = false, value = nil }
     end
     return { plus = op == '+', value = tonumber(value) }
-end
-
-local function eval_op(old, op)
-    if op.plus then
-        return old + op.value
-    else
-        return old * (op.value or old)
-    end
 end
 
 local function new_item(worry, owner)
@@ -89,7 +81,7 @@ local function play_rounds(monkeys, items, lcm, num_rounds)
                 if lcm ~= 0 then
                     w = w % lcm
                 else
-                    w = w // 3
+                    w = math.floor(w / 3)
                 end
                 next_i = w % monkey.div == 0 and monkey.true_monkey or monkey.false_monkey
             until next_i < i

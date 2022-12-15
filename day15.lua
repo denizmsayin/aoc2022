@@ -1,4 +1,5 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
+local compat = require 'lib/compat'
 
 local function abs(x)
     return x < 0 and -x or x
@@ -65,10 +66,10 @@ local function merge_ranges(ranges)
     table.sort(ranges, function(s1, s2) return s1[1] < s2[1] end)
     local i = 1
     while i <= #ranges do
-        local s1, e1 = table.unpack(ranges[i])
+        local s1, e1 = compat.unpack(ranges[i])
         local j = i + 1
         while j <= #ranges do -- merge all that you can!
-            local s2, e2 = table.unpack(ranges[j])
+            local s2, e2 = compat.unpack(ranges[j])
             if can_merge_1d(s1, e1, s2, e2) then
                 s1, e1 = merge_1d(s1, e1, s2, e2)
             else
@@ -112,14 +113,13 @@ end
 -- Have to subtract the number of known beacons from the span sum...
 -- But sensors can match the same beacons, so I need their set.
 -- Ugh! Time to encode... Use strings to keep it simple.
-local ENC_OFF = 100000000 -- 100mil
 local function encode_pos(p)
-    return ((p.x + ENC_OFF) << 32) | (p.y + ENC_OFF)
+    return tostring(p.x) .. ',' .. tostring(p.y)
 end
 
 local function decode_pos(p)
-    local mask = (1 << 32) - 1
-    return { x = (p >> 32) - ENC_OFF, y = (p & mask) - ENC_OFF }
+    local x, y = p:match('(-?%d+),(-?%d+)')
+    return { x = tonumber(x), y = tonumber(y) }
 end
 
 local function collect_beacon_set(sensors)
@@ -138,7 +138,7 @@ local function count_known_beacons_in(beacon_set, ranges, target_y)
         local y = pos.y
         if y == target_y then
             for _, range in ipairs(ranges) do
-                local s, e = table.unpack(range)
+                local s, e = compat.unpack(range)
                     if s <= y and y <= e then
                         c = c + 1
                     end
@@ -160,21 +160,10 @@ end
 
 local function chop_ranges_(ranges, slim, elim)
     for i = 1, #ranges do
-        local s, e = table.unpack(ranges[i])
+        local s, e = compat.unpack(ranges[i])
         s, e = chop_range(s, e, slim, elim)
         ranges[i] = {s, e}
     end
-end
-
-local function brute_available(sensors, x, y)
-    local p = new_point(x, y)
-    for _, sensor in ipairs(sensors) do
-        local dist = get_manhattan(sensor.beacon, p)
-        if dist <= sensor.beacon_dist then
-            return false
-        end
-    end
-    return true
 end
 
 local Y = 2000000 -- 10 for example

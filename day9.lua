@@ -1,4 +1,5 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
+local compat = require 'lib/compat'
 
 NUM_TAILS = utils.IS_PART_1 and 1 or 9 -- different tail size depending on part
 
@@ -22,17 +23,16 @@ local function follow_step(ti, tj, hi, hj)
 end
 
 -- 64 bit ints in Lua 5.4, encode with an unsigned bit shift, add a big offset to make positive
-ENC_OFF = 100000
-local function encode_coord(i, j) return ((i + ENC_OFF) << 32) | (j + ENC_OFF) end
+local function encode_coord(i, j) return tostring(i) .. ',' .. tostring(j) end
 
 local function follow_steps(tail_positions, hi, hj, visited)
     for i = 1, #tail_positions do
-        local ti, tj = table.unpack(tail_positions[i])
+        local ti, tj = compat.unpack(tail_positions[i])
         ti, tj = follow_step(ti, tj, hi, hj)
         tail_positions[i] = { ti, tj }
         hi, hj = ti, tj
     end
-    local ti, tj = table.unpack(tail_positions[#tail_positions])
+    local ti, tj = compat.unpack(tail_positions[#tail_positions])
     visited[encode_coord(ti, tj)] = true
 end
 
@@ -59,7 +59,7 @@ local visited = { [encode_coord(0, 0)] = true }
 for line in io.lines() do
     local dir, steps = line:match('(%a) (%d+)')
     steps = tonumber(steps)
-    local ioff, joff = table.unpack(offsets[dir])
+    local ioff, joff = compat.unpack(offsets[dir])
     for _ = 1, steps do
         hi, hj = hi + ioff, hj + joff
         follow_steps(tail_positions, hi, hj, visited)

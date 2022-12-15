@@ -1,4 +1,5 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
+local compat = require 'lib/compat'
 
 local function parse_grid_row(str)
     local lst = {}
@@ -25,7 +26,7 @@ OFFSETS = { {0, 1}, {0, -1}, {1, 0}, {-1, 0} }
 local function is_visible(grid, ipos, jpos)
     local value = grid[ipos][jpos]
     for _, offset in ipairs(OFFSETS) do
-        local ioff, joff = table.unpack(offset)
+        local ioff, joff = compat.unpack(offset)
         local i, j = ipos + ioff, jpos + joff
         local side_visible = true
         while in_bounds(grid, i, j) do
@@ -58,7 +59,7 @@ local function scenic_score(grid, ipos, jpos)
     local value = grid[ipos][jpos]
     local score = 1
     for _, offset in ipairs(OFFSETS) do
-        local ioff, joff = table.unpack(offset)
+        local ioff, joff = compat.unpack(offset)
         local i, j = ipos + ioff, jpos + joff
         local mult = 0
         while in_bounds(grid, i, j) do

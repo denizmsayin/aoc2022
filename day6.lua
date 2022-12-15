@@ -1,4 +1,4 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
 
 K = utils.IS_PART_1 and 4 or 14
 

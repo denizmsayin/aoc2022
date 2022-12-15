@@ -1,4 +1,4 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
 
 CAPACITY = 70000000
 TARGET_SPACE = 30000000

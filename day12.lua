@@ -1,4 +1,5 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
+local compat = require 'lib/compat'
 
 INF_COST = 1000000000
 
@@ -60,10 +61,10 @@ local function calculate_all_costs(grid, costs)
         -- It's possible to avoid the bad performance here by using 'rounds' of
         -- BFS. i.e. Use two lists, empty the first one, fill the second one,
         -- and swap them around for the next round. But it's already fast...
-        local ti, tj = table.unpack(table.remove(queue, 1))
+        local ti, tj = compat.unpack(table.remove(queue, 1))
         local cost = costs[ti][tj]
         for _, off in ipairs(OFFSETS) do
-            local ioff, joff = table.unpack(off)
+            local ioff, joff = compat.unpack(off)
             local ni, nj = ti + ioff, tj + joff
             if in_bounds(grid, ni, nj) and costs[ni][nj] == INF_COST then
                 local d = diff(grid[ti][tj], grid[ni][nj])

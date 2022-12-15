@@ -1,4 +1,5 @@
-local utils = require('lib/utils')
+local utils = require 'lib/utils'
+local compat = require 'lib/compat'
 
 local function parse_path(line)
     local segs = {}
@@ -53,8 +54,8 @@ end
 local function mark_paths(grid, paths)
     for _, path in ipairs(paths) do
         for idx = 1, #path - 1 do
-            local i1, j1 = table.unpack(path[idx])
-            local i2, j2 = table.unpack(path[idx+1])
+            local i1, j1 = compat.unpack(path[idx])
+            local i2, j2 = compat.unpack(path[idx+1])
             if i1 == i2 then
                 if j1 > j2 then
                     j1, j2 = j2, j1
@@ -89,7 +90,7 @@ local function sim_step(grid, m, prev_pos_stack)
     end
 
     -- Otherwise, simulate by dropping a grain
-    local i, j = table.unpack(table.remove(prev_pos_stack))
+    local i, j = compat.unpack(table.remove(prev_pos_stack))
     local moved = true
     local ii, jj
     while i < m and moved do
