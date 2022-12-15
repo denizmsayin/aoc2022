@@ -1,39 +1,53 @@
 local utils = require('lib/utils')
 
-Monkey = {}
-Monkey.__index = Monkey
+-- Storing item lists in monkey and passing them around resizeable arrays
+-- seems to make the whole thing slow down a little (0.12s). 
+-- Instead: store all the items in a global list, along with which monkey they belong to.
+-- The key idea is that items will be processed again in the same round if they move to
+-- a monkey with a higher index; but not if moving back. Thus, we can process the whole
+-- round in one fell swoop through the item array, without moving anything around.
 
-function Monkey.new(id, items, update, div, true_monkey, false_monkey)
-    return { id = id, items = items, update = update, div = div,
-             true_monkey = true_monkey, false_monkey = false_monkey, inspect_count = 0 }
+-- Doing this naively halved the time and I ended up at 0.06s. 
+-- Further micro-optims on the tight loop did help, but only had a small effect:
+-- * Pushing the round loop inside the play_rounds function.
+-- * Inlining op evaluation to remove function call overhead
+
+local function new_monkey(op, div, true_monkey, false_monkey)
+    return { op = op, div = div, inspect_count = 0,
+             true_monkey = true_monkey, false_monkey = false_monkey }
 end
 
+-- Compact storage: 
 local function parse_op(op_string)
     local op, value = op_string:match('(.) (.+)')
-    value = (value == 'old') and nil or tonumber(value)
-    return { plus = op == '+', value = value }
+    if value == 'old' then
+        return { plus = false, value = nil }
+    end
+    return { plus = op == '+', value = tonumber(value) }
 end
 
 local function eval_op(old, op)
-    local rhs = op.value or old -- use old if op.value == nil
     if op.plus then
-        return old + rhs
+        return old + op.value
     else
-        return old * rhs
+        return old * (op.value or old)
     end
 end
 
-local function read_monkey()
+local function new_item(worry, owner)
+    return { worry = worry, owner = owner }
+end
+
+local function read_monkey(items)
     local line = io.read()
     if line == nil then
         return nil
     end
-    local id = tonumber(string.match(line, 'Monkey (%d):'))
+    local id = tonumber(string.match(line, 'Monkey (%d):')) + 1 -- +1 to match lua indices
 
     local items_string = string.match(io.read(), '  Starting items: (.*)')
-    local items = {}
     for num in items_string:gmatch('%d+') do
-        table.insert(items, tonumber(num))
+        table.insert(items, new_item(tonumber(num), id))
     end
 
     local op_string = string.match(io.read(), '  Operation: new = old (.*)')
@@ -45,8 +59,7 @@ local function read_monkey()
 
     local _ = io.read()
 
-    -- add 1 to match lua indices
-    return Monkey.new(id + 1, items, op, div, true_monkey + 1, false_monkey + 1)
+    return new_monkey(op, div, true_monkey + 1, false_monkey + 1) -- +1 for lua inds
 end
 
 local function div_lcm(monkeys)
@@ -57,36 +70,48 @@ local function div_lcm(monkeys)
     return prod
 end
 
-local function play_round(monkeys)
-    local lcm = div_lcm(monkeys)
-    for i = 1, #monkeys do
-        local monkey = monkeys[i]
-        monkey.inspect_count = monkey.inspect_count + #monkey.items
-        while #monkey.items > 0 do
-            local item = table.remove(monkey.items)
-            item = eval_op(item, monkey.update)
-            if utils.IS_PART_1 then
-                item = item // 3
-            else
-                item = item % lcm
-            end
-            local target = item % monkey.div == 0 and monkey.true_monkey or monkey.false_monkey
-            table.insert(monkeys[target].items, item)
+local function play_rounds(monkeys, items, lcm, num_rounds)
+    for _, item in ipairs(items) do
+        local w = item.worry
+        local i = item.owner
+        local next_i = i
+        for _ = 1, num_rounds do
+            repeat
+                i = next_i
+                local monkey = monkeys[i]
+                monkey.inspect_count = monkey.inspect_count + 1
+                local op = monkey.op
+                if op.plus then
+                    w = w + op.value
+                else
+                    w = w * (op.value or w)
+                end
+                if lcm ~= 0 then
+                    w = w % lcm
+                else
+                    w = w // 3
+                end
+                next_i = w % monkey.div == 0 and monkey.true_monkey or monkey.false_monkey
+            until next_i < i
         end
     end
 end
 
-local monkeys = {}
+local monkeys, items = {}, {}
 while true do
-    local m = read_monkey()
+    local m = read_monkey(items)
     if m == nil then break end
     table.insert(monkeys, m)
 end
 
-local num_rounds = utils.IS_PART_1 and 20 or 10000
-for _ = 1, num_rounds do
-    play_round(monkeys)
+local num_rounds, lcm
+if utils.IS_PART_1 then
+    num_rounds, lcm = 20, 0
+else
+    num_rounds, lcm = 10000, div_lcm(monkeys)
 end
+
+play_rounds(monkeys, items, lcm, num_rounds)
 
 table.sort(monkeys, function(a, b) return a.inspect_count > b.inspect_count end)
 print(monkeys[1].inspect_count * monkeys[2].inspect_count)

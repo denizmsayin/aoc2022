@@ -1,15 +1,5 @@
 local utils = require('lib/utils')
 
-local function print_grid(grid)
-    for _, row in ipairs(grid) do
-        for _, v in ipairs(row) do
-            local ch = (v < 0 and '.' or (v == 0 and '#' or 'o'))
-            io.write(ch)
-        end
-        io.write('\n')
-    end
-end
-
 local function parse_path(line)
     local segs = {}
     for j, i in line:gmatch'(%d+),(%d+)' do
@@ -84,18 +74,6 @@ local function mark_paths(grid, paths)
             end
         end
     end
-end
-
-local function count_stopped_grains(grid)
-    local c = 0
-    for _, row in ipairs(grid) do
-        for _, v in ipairs(row) do
-            if v > 0 then
-                c = c + 1
-            end
-        end
-    end
-    return c
 end
 
 local J_OFFSETS = { 0, -1, 1 } -- offsets to check to move down
