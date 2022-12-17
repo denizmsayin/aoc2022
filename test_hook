@@ -6,23 +6,25 @@
 cp readme_template.md README.md
 exec 0<&-
 
-LUA=lua ./test_solutions | tee -a README.md
-if [ ${PIPESTATUS[0]} != 0 ]; then
-  echo "*** At least one test failed, commit aborted! ***"
-  exit 1 # tests failed, do not commit
-else
-  echo "Lua tests successful! On to LuaJIT..."
-fi
-
-echo >> README.md
-
 LUA=luajit ./test_solutions | tee -a README.md
 if [ ${PIPESTATUS[0]} != 0 ]; then
   echo "*** At least one test failed, commit aborted! ***"
   exit 1 # tests failed, do not commit
 else
-  echo "LuaJIT tests also successful! Committing with updated README..."
+  echo "LuaJIT tests successful! On to Lua 5.4..."
 fi
+
+LUA=lua ./test_solutions | tee -a README.md
+if [ ${PIPESTATUS[0]} != 0 ]; then
+  echo "*** At least one test failed, commit aborted! ***"
+  exit 1 # tests failed, do not commit
+else
+  echo "Lua tests also successful!"
+fi
+
+echo "Committing with updated README..."
+
+echo >> README.md
 
 git add README.md
 
