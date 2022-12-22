@@ -111,8 +111,8 @@ local ijet = 1
 local njets = #jets
 local map = create_map(10000, W)
 local hmax = 1
-print_grid(map, hmax)
-print()
+-- print_grid(map, hmax)
+-- print()
 for step = 1, 2022 do
     local rock = make_rock(step)
     local hrock, wrock = #rock, #rock[1]

@@ -113,12 +113,13 @@ local function print_cgraph(cvalves)
     end
 end
 
-local function encode_state(num_nodes, cur_ind, visited, mins_left)
+local function encode_state(num_nodes, cur_ind, visited, mins_left, is_elephant)
     local v = 0
     for i = 1, num_nodes do -- encode visited
         local c = visited[i] and 1 or 0
         v = 2 * v + c
     end
+    v = 2 * v + (is_elephant and 1 or 0)
     v = v * (num_nodes + 1) + cur_ind
     v = v * 50 + mins_left
     return v
@@ -154,8 +155,15 @@ end
 local function dfs(valves, lookup, max_mins, double_search)
     -- The recursive closure here uses the constant arguments from above
     local start_ind = lookup['AA']
+    local num_nodes = #valves
+    local memo = {}
     local function dfs_(cur_ind, visited, mins_left, is_elephant)
         local best = 0
+
+        local enc = encode_state(num_nodes, cur_ind, visited, mins_left, is_elephant)
+        if memo[enc] ~= nil then
+            return memo[enc]
+        end
 
         if not is_elephant then
             local cand = dfs_(start_ind, visited, max_mins, true)
@@ -186,6 +194,8 @@ local function dfs(valves, lookup, max_mins, double_search)
         end
 
         visited[cur_ind] = false
+
+        memo[enc] = best
 
         return best
     end
