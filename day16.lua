@@ -1,6 +1,9 @@
 local utils = require 'lib/utils'
 local compat = require 'lib/compat'
 
+
+local START_NODE = 'AA'
+
 local function mkvalve(name, rate, neighbors)
     return { name = name, rate = rate, neighbors = neighbors }
 end
@@ -110,37 +113,59 @@ local function print_cgraph(cvalves)
     end
 end
 
-local function dfs(valves, cur_name, prev_name, mins_left)
-    local best = 0
+local function encode_state(num_nodes, cur_ind, visited, mins_left)
+    local v = 0
+    for i = 1, num_nodes do -- encode visited
+        local c = visited[i] and 1 or 0
+        v = 2 * v + c
+    end
+    v = v * (num_nodes + 1) + cur_ind
+    v = v * 50 + mins_left
+    return v
+end
 
-    if mins_left > 0 then
-        -- print(cur_name, prev_name)
-        local cur_valve = valves[cur_name]
-        local rate = cur_valve.rate
-        local cand
-        if rate > 0 and mins_left > 1 then
-            cand = rate * (mins_left - 1)
-            cur_valve.rate = 0 -- prevent following search from re-using this valve
-            cand = cand + dfs(valves, cur_name, nil, mins_left - 1)
-            cur_valve.rate = rate -- restore the rate for further use
+local function decode_state(num_nodes, enc)
+    local mins_left = enc % 50
+    enc = (enc - mins_left) / 50
+    local cur_ind = enc % (num_nodes + 1)
+    enc = (enc - cur_ind) / (num_nodes + 1)
+    local visited = {}
+    for i = num_nodes, 1, -1 do
+        local c = enc % 2
+        if c == 1 then
+            visited[i] = true
+        end
+        enc = (enc - c) / 2
+    end
+    if enc ~= 0 then error('Decoding logic error') end
+    return cur_ind, visited, mins_left
+end
+
+local function visited2str(visited)
+    local s = ''
+    for i, v in pairs(visited) do
+        if v then
+            s = s .. tostring(i)
+        end
+    end
+    return s
+end
+
+local function dfs(valves, lookup, max_mins, double_search)
+    -- The recursive closure here uses the constant arguments from above
+    local start_ind = lookup['AA']
+    local function dfs_(cur_ind, visited, mins_left, is_elephant)
+        local best = 0
+
+        if not is_elephant then
+            local cand = dfs_(start_ind, visited, max_mins, true)
             best = max(best, cand)
         end
 
-        for _, n in ipairs(cur_valve.neighbors) do
-            if n ~= prev_name then
-                cand = dfs(valves, n, cur_name, mins_left - 1)
-                best = max(best, cand)
-            end
+        if mins_left <= 1 then
+            return best
         end
-    end
 
-    return best
-end
-
-local function dfsc(valves, cur_ind, visited, mins_left)
-    local best = 0
-
-    if mins_left > 1 then -- can't do anything in just one min
         -- print(cur_ind, prev_name)
         local cur_valve = valves[cur_ind]
         local rate = cur_valve.rate
@@ -155,94 +180,23 @@ local function dfsc(valves, cur_ind, visited, mins_left)
         end
         for n, cost in pairs(cur_valve.neighbors) do
             if not visited[n] then
-                local cand = dfsc(valves, n, visited, mins_left - cost)
+                local cand = dfs_(n, visited, mins_left - cost, is_elephant)
                 best = max(best, vented + cand)
             end
         end
 
         visited[cur_ind] = false
-    end
-
-    return best
-end
-
-local function dfsc2(start_ind, start_mins, valves, cur_ind, visited, mins_left)
-    if mins_left > 1 then -- can't do anything in just one min
-        -- print(cur_ind, prev_name)
-        local best = 0
-        local cur_valve = valves[cur_ind]
-        local rate = cur_valve.rate
-        visited[cur_ind] = true
-
-        -- Turn on this valve and move on, not doing it is not a choice for compressed graph
-        local vented = 0
-        if rate > 0 then
-            mins_left = mins_left - 1
-            vented = rate * mins_left
-            best = vented
-        end
-        for n, cost in pairs(cur_valve.neighbors) do
-            if not visited[n] then
-                local cand = dfsc2(start_ind, start_mins, valves, n, visited, mins_left - cost)
-                best = max(best, vented + cand)
-            end
-        end
-
-        visited[cur_ind] = false
-
-        -- Also, attempt to have other elephant bro do everything instead
-        local cand = dfsc(valves, start_ind, visited, start_mins)
-        best = max(best, cand)
 
         return best
-    else
-        return dfsc(valves, start_ind, visited, start_mins)
     end
+    return dfs_(start_ind, {}, max_mins, not double_search)
 end
--- 
--- local function dfsc2(valves, visited, my_state, other_state)
---     if my_state.mins_left <= 1 and other_state.mins_left <= 1 then
---         return 0
---     elseif my_state.mins_left <= 1 then
---         return dfsc2(valves, visited, other_state, my_state)
---     else
---         local best = 0
---         local mins_left = my_state.mins_left
---         local cur_name = my_state.cur_name
---         -- print(cur_name, prev_name)
---         local cur_valve = valves[cur_name]
---         local rate = cur_valve.rate
--- 
---         -- Turn on this valve and move on, not doing it is not a choice for compressed graph
---         local vented = 0
---         if rate > 0 then
---             mins_left = mins_left - 1
---             vented = rate * mins_left
--- --             print(string.format('%p: Opened %s, vented %d', my_state, cur_name, vented))
---             best = vented
---         end
---         for n, cost in pairs(cur_valve.neighbors) do
---             if not visited[n] then
---                 visited[n] = true
---                 my_state.cur_name, my_state.mins_left = n, mins_left - cost
---                 local cand = dfsc2(valves, visited, other_state, my_state)
---                 my_state.cur_name, my_state.mins_left = cur_name, mins_left -- restore mins left to continue search
---                 best = max(best, vented + cand)
---                 visited[n] = false
---             end
---         end
--- 
---         return best
---     end
--- end
 
-local START_NODE = 'AA'
 local valves = read_valves()
 local cvalves, name_mapping = compress_graph(valves, START_NODE)
-local start_ind = name_mapping[START_NODE]
 -- print_cgraph(cvalves)
 if utils.IS_PART_1 then
-    print(dfsc(cvalves, start_ind, {}, 30))
+    print(dfs(cvalves, name_mapping, 30, false))
 else
-    print(dfsc2(start_ind, 26, cvalves, start_ind, {}, 26))
+    print(dfs(cvalves, name_mapping, 26, true))
 end
