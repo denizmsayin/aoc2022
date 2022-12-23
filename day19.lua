@@ -1,114 +1,217 @@
 local utils = require 'lib/utils'
 local compat = require 'lib/compat'
 
+local function max(a, b) return a > b and a or b end
+
+local function cj(t) return table.concat(t, ', ') end
+
+-- For fun, let's attempt to create properties for ore sets!
+-- Ore sets are essentially arrays { 0, 0, 0, 0 }, but we also want to support
+-- accessing/setting them via keys such as oreset.copper and oreset.clay etc.
+-- We'll use the same for RobotSet later too.
+
+-- This is surprisingly simple for index: We simply need to add key - int values to the class 
+-- itself. However, for __newindex we do need to write a function that does the rawset
+
 local PATTERN = '%s*Blueprint (%d+):%s+Each ore robot costs (%d+) ore.%s+Each clay robot costs (%d+) ore.%s+Each obsidian robot costs (%d+) ore and (%d+) clay.%s+Each geode robot costs (%d+) ore and (%d+) obsidian.'
 
-local function read_blueprints()
+local function read_blueprints(nmax)
+    if nmax == nil then nmax = 1000 end
     local bps = {}
-    for bid, oc, cc, ooc, occ, gorec, gobsc in string.gmatch(io.read('*a'), PATTERN) do
+    for _, oc, cc, ooc, occ, gorec, gobsc in string.gmatch(io.read('*a'), PATTERN) do
 --         print(bid, oc, cc, ooc, occ, gorec, gobsc)
         local bp = { { tonumber(oc), 0, 0 },
                      { tonumber(cc), 0, 0 },
                      { tonumber(ooc), tonumber(occ), 0 },
                      { tonumber(gorec), 0, tonumber(gobsc) } }
         table.insert(bps, bp)
+        if #bps >= nmax then
+            break
+        end
     end
     return bps
 end
+-- 
+-- local function copy4(arr)
+--     return { arr[1], arr[2], arr[3], arr[4] }
+-- end
+-- 
+-- local function enough_ores_for(robot_cost, ores)
+--     for i = 1, #robot_cost do
+--         if robot_cost[i] > ores[i] then
+--             return false
+--         end
+--     end
+--     return true
+-- end
+-- 
+-- local function build_robot(bp, i, robots, ores)
+--     ores = copy4(ores)
+--     robots = copy4(robots)
+--     local robot_cost = bp[i]
+--     for j = 1, #robot_cost do
+--         ores[j] = ores[j] - robot_cost[j]
+--     end
+--     robots[i] = robots[i] + 1
+--     return robots, ores
+-- end
+-- 
+-- local memo_table = {}
+-- 
+-- local function make_key(robots, ores, t)
+--     return string.format('%d_%d_%d_%d_%d_%d_%d_%d', robots[1], robots[2], robots[3], robots[4],
+--                          ores[1], ores[2], ores[3], t)
+-- end
+-- 
+-- local function max_ore_cost(bp)
+--     local m = 0
+--     for _, cost in pairs(bp) do
+--         if cost[1] > m then
+--             m = cost[1]
+--         end
+--     end
+--     return m
+-- end
+-- 
+-- -- local function produce(blueprint, robots, ores, t, moc)
+-- --     if t <= 0 then
+-- --         return ores[4]
+-- --     end
+-- -- 
+-- --     local best = ores[4]
+-- --     local cand
+-- --     local produced = false
+-- --     -- Try producing stuff
+-- --     for i = 1, #blueprint do
+-- --         if enough_ores_for(blueprint[i], ores) then
+-- --             local srobots, sores = build_robot(blueprint, i, robots, ores)
+-- --             produced = true
+-- --             sores = mine_ores(robots, sores)
+-- --             cand = produce(blueprint, srobots, sores, t - 1, moc)
+-- --             if cand > best then
+-- --                 best = cand
+-- --             end
+-- --         end
+-- --     end
+-- --     -- Try not producing if nothing could be produced, or if there's less ore than max
+-- --     if not produced or ores[1] < moc then
+-- --         cand = produce(blueprint, robots, mine_ores(robots, ores), t - 1, moc)
+-- --         if cand > best then
+-- --             best = cand
+-- --         end
+-- --     end
+-- --     return best
+-- -- end
 
-local function copy4(arr)
-    return { arr[1], arr[2], arr[3], arr[4] }
+local function cparr(arr)
+    local cp = {}
+    for i = 1, #arr do
+        cp[i] = arr[i]
+    end
+    return cp
 end
 
-local function enough_ores_for(robot_cost, ores)
-    for i = 1, #robot_cost do
-        if robot_cost[i] > ores[i] then
+-- Generic function for checking whether the current robot set
+-- can produce the target robot after waiting a while
+local function can_build_robot(blueprint, robots, robot)
+    local cost = blueprint[robot]
+    for i = 1, #cost do
+        if cost[i] > 0 and robots[i] == 0 then
             return false
         end
     end
     return true
 end
 
-local function build_robot(bp, i, robots, ores)
-    ores = copy4(ores)
-    robots = copy4(robots)
-    local robot_cost = bp[i]
-    for j = 1, #robot_cost do
-        ores[j] = ores[j] - robot_cost[j]
-    end
-    robots[i] = robots[i] + 1
-    return robots, ores
-end
-
-local function mine_ores(robots, ores)
-    ores = copy4(ores)
-    for i = 1, #robots do
-        ores[i] = ores[i] + robots[i]
-    end
-    return ores
-end
-
-local memo_table = {}
-
-local function make_key(robots, ores, t)
-    return string.format('%d_%d_%d_%d_%d_%d_%d_%d', robots[1], robots[2], robots[3], robots[4],
-                         ores[1], ores[2], ores[3], t)
-end
-
-local function max_ore_cost(bp)
-    local m = 0
-    for _, cost in pairs(bp) do
-        if cost[1] > m then
-            m = cost[1]
-        end
-    end
-    return m
-end
-
-local function produce(blueprint, robots, ores, t, moc)
-    if t <= 0 then
-        return ores[4]
-    end
-
-    local k = make_key(robots, ores, t)
-    if memo_table[k] == nil then
-        local best = ores[4]
-        local cand
-        local produced = false
-        -- Try producing stuff
-        for i = 1, #blueprint do
-            if enough_ores_for(blueprint[i], ores) then
-                local srobots, sores = build_robot(blueprint, i, robots, ores)
-                produced = true
-                sores = mine_ores(robots, sores)
-                cand = produce(blueprint, srobots, sores, t - 1, moc)
-                if cand > best then
-                    best = cand
-                end
+-- Assuming the robot can be build, how many steps would we need to wait to build it?
+local function time_to_robot(blueprint, robots, minerals, robot)
+    local cost = blueprint[robot]
+    local max_t = 0 -- zero return implies can't produce
+    for i = 1, #cost do
+        if cost[i] > 0 then
+            if robots[i] > 0 then
+                local t = math.ceil((cost[i] - minerals[i]) / robots[i])
+                max_t = max(max_t, t)
+            else -- cost exists, but no robot to mine the necessary mineral
+                return 0
             end
         end
-        -- Try not producing if nothing could be produced, or if there's less ore than max
-        if not produced or ores[1] < moc then
-            cand = produce(blueprint, robots, mine_ores(robots, ores), t - 1, moc)
-            if cand > best then
-                best = cand
-            end
-        end
-        memo_table[k] = best
     end
-    return memo_table[k]
+    return max_t + 1 -- because production takes one extra turn
 end
 
-local blueprints = read_blueprints()
+local function mine_minerals_build_robot(blueprint, robots, minerals, robot, t)
+    local cost = blueprint[robot]
+    minerals = cparr(minerals)
+    for i = 1, #cost do
+        minerals[i] = minerals[i] + robots[i] * t - cost[i]
+        if minerals[i] < 0 then
+            print(cj(minerals), cj(robots), cj(cost))
+            error('Oopsie')
+        end
+    end
+    robots = cparr(robots)
+    robots[robot] = robots[robot] + 1
+    return minerals, robots
+end
+
+-- local choices = {}
+
+local function max_geodes(blueprint, max_t)
+    local function produce(robots, minerals, t)
+        if t <= 0 then
+            return 0
+        end
+
+        -- At each step, choose the next robot to produce to decide
+        -- Try to choose the next robot to make
+        local best = robots[4] * t
+        for robot = 1, #robots do
+            local ttr = time_to_robot(blueprint, robots, minerals, robot)
+    --         print(t, table.concat(robots, ', '), table.concat(minerals, ', '))
+    --         if ttr == 0 then
+    -- --             print(t, table.concat(robots, ', '), table.concat(minerals, ', '))
+    -- --             print(string.format('Can build robot %d in %d time', robot, ttr))
+    --         end
+            if ttr > 0 and t - ttr > 0 then
+                local next_minerals, next_robots =
+                        mine_minerals_build_robot(blueprint, robots, minerals, robot, ttr)
+                local next_geodes = produce(next_robots, next_minerals, t - ttr)
+    --             local cand = robots[4] * ttr + next_geodes
+    --             if cand > best then
+    --                 best = cand
+    --                 choices[depth] = { robot, t, t - ttr, ores = next_minerals }
+    --             end
+                best = max(best, robots[4] * ttr + next_geodes)
+            end
+        end
+
+        return best
+    end
+
+    return produce({ 1, 0, 0, 0 }, { 0, 0, 0 }, max_t)
+end
+
+local nmax, time
+if utils.IS_PART_1 then
+    time = 24
+else
+    nmax, time = 3, 32
+end
+
+local blueprints = read_blueprints(nmax)
 local quality = 0
 for i = 1, #blueprints do
     local bp = blueprints[i]
+    print('Blueprint:', i)
     for _, cost in ipairs(bp) do
         print(table.concat(cost, ', '))
     end
-    memo_table = {}
-    local p = produce(bp, { 1, 0, 0, 0 }, { 0, 0, 0, 0 }, 24, max_ore_cost(bp))
+    local p = max_geodes(bp, time)
     print(p)
     quality = quality + i * p
 end
+-- for k, v in pairs(choices) do
+--     print(k, table.concat(v, ' -> '), cj(v.ores))
+-- end
 print(quality)
