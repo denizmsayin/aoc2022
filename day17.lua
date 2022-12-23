@@ -99,24 +99,52 @@ local function intersects(rock, map, ai, aj, int_off_i, int_off_j)
     return false
 end
 
+local function is_flat(map, hmax)
+    local w = #map[1]
+    for j = 1, w do
+        if map[hmax][j] <= 0 then
+            return false
+        end
+    end
+    return true
+end
+
 --
 -- i
 -- ^
 -- |
 --  ---> j
 
+local N, ijet, start_step
+if arg[2] == nil then -- allow getting N from the command line
+    N = 2022
+    ijet = 1
+    start_step = 1
+else
+    N = tonumber(arg[2])
+    ijet = tonumber(arg[3] or '1')
+    start_step = tonumber(arg[4] or '1')
+end
+
 local W = 7 + 2 -- +2 for sentinels
 local jets = read_jets()
-local ijet = 1
 local njets = #jets
-local map = create_map(10000, W)
+local map = create_map(100000, W)
 local hmax = 1
 -- print_grid(map, hmax)
 -- print()
-for step = 1, 2022 do
+for step = start_step, start_step + N - 1 do
     local rock = make_rock(step)
     local hrock, wrock = #rock, #rock[1]
     local ai, aj = hmax + 4, 3 + 1
+
+    -- Used to find pattern to manually calculate part 2
+    -- However, it works for the given input but does not extend
+    -- to the sample. Hmmm....
+--     if is_flat(map, hmax) then
+--         print(step, (step - 1) % 5, ijet, hmax - 1)
+--     end
+
     while true do
         -- Jet move
         local jet = jets[ijet]
@@ -155,7 +183,7 @@ for step = 1, 2022 do
             ai = ai - 1
         end
     end
---     print_grid(map, hmax)
---     print()
 end
+-- print_grid(map, hmax)
+-- print()
 print(hmax-1)

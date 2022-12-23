@@ -8,6 +8,8 @@ I usually tried to make my solutions _fast_ (< 50ms). If some are slower right n
 
 I initially started with the [Lua 5.4](https://www.lua.org/manual/5.4/manual.html) interpreter to keep things simple and did not use the legendary [LuaJIT](https://luajit.org/luajit.html). After day 15 however, I integrated LuaJIT as well since any Lua I use in real life will probably be LuaJIT or some derivative. This was pretty fun, since I got to compare performances between the two, make my own small compatibility library under `lib/compat.lua` as an exercise, and keep compatibility in mind in general. I'll talk more about it in my eventual Lua comments.
 
+__NOTE:__ I cheesed my way through day 17 part 2 with some manual searching and calculations (using `calc.py`) because the solution I used does not generalize to the sample input. I'll have to think about it some more.
+
 ## howtospeed
 
 __NOTE:__ Times I mention here are in Lua 5.4 unless specified otherwise.

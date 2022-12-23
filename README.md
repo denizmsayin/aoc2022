@@ -8,6 +8,8 @@ I usually tried to make my solutions _fast_ (< 50ms). If some are slower right n
 
 I initially started with the [Lua 5.4](https://www.lua.org/manual/5.4/manual.html) interpreter to keep things simple and did not use the legendary [LuaJIT](https://luajit.org/luajit.html). After day 15 however, I integrated LuaJIT as well since any Lua I use in real life will probably be LuaJIT or some derivative. This was pretty fun, since I got to compare performances between the two, make my own small compatibility library under `lib/compat.lua` as an exercise, and keep compatibility in mind in general. I'll talk more about it in my eventual Lua comments.
 
+__NOTE:__ I cheesed my way through day 17 part 2 with some manual searching and calculations (using `calc.py`) because the solution I used does not generalize to the sample input. I'll have to think about it some more.
+
 ## howtospeed
 
 __NOTE:__ Times I mention here are in Lua 5.4 unless specified otherwise.
@@ -47,45 +49,6 @@ ln test_hook .git/hooks/pre-commit
 
 ### ... and their results
 
-Using: `Lua 5.4.4  Copyright (C) 1994-2022 Lua.org, PUC-Rio`
-```diff
-+ day1	part1: OK (0.00s)
-+ day1	part2: OK (0.00s)
-+ day2	part1: OK (0.00s)
-+ day2	part2: OK (0.00s)
-+ day3	part1: OK (0.00s)
-+ day3	part2: OK (0.00s)
-+ day4	part1: OK (0.00s)
-+ day4	part2: OK (0.00s)
-+ day5	part1: OK (0.00s)
-+ day5	part2: OK (0.00s)
-+ day6	part1: OK (0.00s)
-+ day6	part2: OK (0.00s)
-+ day7	part1: OK (0.00s)
-+ day7	part2: OK (0.00s)
-+ day8	part1: OK (0.01s)
-+ day8	part2: OK (0.01s)
-+ day9	part1: OK (0.01s)
-+ day9	part2: OK (0.02s)
-+ day10	part1: OK (0.00s)
-+ day10	part2: OK (0.00s)
-+ day11	part1: OK (0.00s)
-+ day11	part2: OK (0.04s)
-+ day12	part1: OK (0.00s)
-+ day12	part2: OK (0.00s)
-+ day13	part1: OK (0.00s)
-+ day13	part2: OK (0.00s)
-+ day14	part1: OK (0.00s)
-+ day14	part2: OK (0.01s)
-+ day15	part1: OK (0.00s)
-+ day15	part2: OK (0.00s)
-+ day16	part1: OK (0.19s)
-+ day16	part2: OK (6.74s)
-+ day17	part1: OK (0.01s)
-+ day18	part1: OK (0.00s)
-+ day18	part2: OK (0.01s)
-```
-
 Using: `LuaJIT 2.1.0-beta3 -- Copyright (C) 2005-2022 Mike Pall. https://luajit.org/`
 ```diff
 + day1	part1: OK (0.00s)
@@ -118,9 +81,48 @@ Using: `LuaJIT 2.1.0-beta3 -- Copyright (C) 2005-2022 Mike Pall. https://luajit.
 + day14	part2: OK (0.00s)
 + day15	part1: OK (0.00s)
 + day15	part2: OK (0.00s)
-+ day16	part1: OK (0.06s)
-+ day16	part2: OK (3.12s)
-+ day17	part1: OK (0.00s)
++ day16	part1: OK (0.07s)
++ day16	part2: OK (3.27s)
++ day17	part1: OK (0.02s)
 + day18	part1: OK (0.00s)
 + day18	part2: OK (0.00s)
 ```
+Using: `Lua 5.4.4  Copyright (C) 1994-2022 Lua.org, PUC-Rio`
+```diff
++ day1	part1: OK (0.00s)
++ day1	part2: OK (0.00s)
++ day2	part1: OK (0.00s)
++ day2	part2: OK (0.00s)
++ day3	part1: OK (0.00s)
++ day3	part2: OK (0.00s)
++ day4	part1: OK (0.00s)
++ day4	part2: OK (0.00s)
++ day5	part1: OK (0.00s)
++ day5	part2: OK (0.00s)
++ day6	part1: OK (0.00s)
++ day6	part2: OK (0.00s)
++ day7	part1: OK (0.00s)
++ day7	part2: OK (0.00s)
++ day8	part1: OK (0.01s)
++ day8	part2: OK (0.01s)
++ day9	part1: OK (0.01s)
++ day9	part2: OK (0.02s)
++ day10	part1: OK (0.00s)
++ day10	part2: OK (0.00s)
++ day11	part1: OK (0.00s)
++ day11	part2: OK (0.04s)
++ day12	part1: OK (0.01s)
++ day12	part2: OK (0.00s)
++ day13	part1: OK (0.00s)
++ day13	part2: OK (0.00s)
++ day14	part1: OK (0.00s)
++ day14	part2: OK (0.01s)
++ day15	part1: OK (0.00s)
++ day15	part2: OK (0.00s)
++ day16	part1: OK (0.19s)
++ day16	part2: OK (7.18s)
++ day17	part1: OK (0.08s)
++ day18	part1: OK (0.00s)
++ day18	part2: OK (0.01s)
+```
+
