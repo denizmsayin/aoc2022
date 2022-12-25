@@ -1,5 +1,4 @@
 local utils = require 'lib/utils'
-local compat = require 'lib/compat'
 
 local function read_linked(key)
     local index = {}
@@ -26,20 +25,9 @@ local function read_linked(key)
     return index, node0
 end
 
-local function fmtll(head)
-    local acc = {}
-    local p = head
-    repeat
-        table.insert(acc, p.value)
-        p = p.next
-    until p == head
-    return string.format('[%s]', table.concat(acc, ', '))
-end
-
 local function llnext(node, n)
-    local itr = node
-    for _ = 1, n do itr = itr.next end
-    return itr
+    for _ = 1, n do node = node.next end
+    return node
 end
 
 local function shift_node(node, n)
@@ -66,6 +54,7 @@ local function shift_node(node, n)
 end
 
 -- Not only mod, but also choose the fast direction
+-- Doubles execution speed as expected :)
 local function mod_directed(sh, n)
     local l = n - 1
     local m = sh % l
@@ -74,7 +63,6 @@ local function mod_directed(sh, n)
     end
     return m
 end
-
 
 local function mix(index)
     local n = #index
