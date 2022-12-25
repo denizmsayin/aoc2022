@@ -81,14 +81,15 @@ Using: `LuaJIT 2.1.0-beta3 -- Copyright (C) 2005-2022 Mike Pall. https://luajit.
 + day14	part2: OK (0.00s)
 + day15	part1: OK (0.00s)
 + day15	part2: OK (0.00s)
-+ day16	part1: OK (0.05s)
-+ day16	part2: OK (3.21s)
++ day16	part1: OK (0.06s)
++ day16	part2: OK (3.08s)
 + day17	part1: OK (0.02s)
 + day18	part1: OK (0.00s)
 + day18	part2: OK (0.00s)
 + day19	part1: OK (0.23s)
-+ day19	part2: OK (5.51s)
-+ day20	part1: OK (0.19s)
++ day19	part2: OK (5.29s)
++ day20	part1: OK (0.05s)
++ day20	part2: OK (0.68s)
 ```
 Using: `Lua 5.4.4  Copyright (C) 1994-2022 Lua.org, PUC-Rio`
 ```diff
@@ -123,12 +124,13 @@ Using: `Lua 5.4.4  Copyright (C) 1994-2022 Lua.org, PUC-Rio`
 + day15	part1: OK (0.00s)
 + day15	part2: OK (0.00s)
 + day16	part1: OK (0.19s)
-+ day16	part2: OK (6.81s)
++ day16	part2: OK (6.82s)
 + day17	part1: OK (0.08s)
 + day18	part1: OK (0.00s)
 + day18	part2: OK (0.01s)
 + day19	part1: OK (0.50s)
-+ day19	part2: OK (7.71s)
-+ day20	part1: OK (0.27s)
++ day19	part2: OK (7.78s)
++ day20	part1: OK (0.08s)
++ day20	part2: OK (1.02s)
 ```
 
