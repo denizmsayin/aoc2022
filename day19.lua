@@ -155,9 +155,22 @@ local function mine_minerals_build_robot(blueprint, robots, minerals, robot, t)
     return minerals, robots
 end
 
--- local choices = {}
+local function get_blueprint_max_costs(blueprint)
+    local max_costs = { 0, 0, 0 }
+    for _, costs in ipairs(blueprint) do
+        for i = 1, #costs do
+            if costs[i] > max_costs[i] then
+                max_costs[i] = costs[i]
+            end
+        end
+    end
+    return max_costs
+end
 
 local function max_geodes(blueprint, max_t)
+    local max_costs = get_blueprint_max_costs(blueprint)
+--     print('Max costs:', cj(max_costs))
+
     local function produce(robots, minerals, t)
         if t <= 0 then
             return 0
@@ -165,24 +178,31 @@ local function max_geodes(blueprint, max_t)
 
         -- At each step, choose the next robot to produce to decide
         -- Try to choose the next robot to make
+
+        -- One key insight for speed: Since only one robot can be produced per time step,
+        -- it does not make sense to make more robots for a resource than the max cost with
+        -- that resource.
+
         local best = robots[4] * t
         for robot = 1, #robots do
-            local ttr = time_to_robot(blueprint, robots, minerals, robot)
-    --         print(t, table.concat(robots, ', '), table.concat(minerals, ', '))
-    --         if ttr == 0 then
-    -- --             print(t, table.concat(robots, ', '), table.concat(minerals, ', '))
-    -- --             print(string.format('Can build robot %d in %d time', robot, ttr))
-    --         end
-            if ttr > 0 and t - ttr > 0 then
-                local next_minerals, next_robots =
-                        mine_minerals_build_robot(blueprint, robots, minerals, robot, ttr)
-                local next_geodes = produce(next_robots, next_minerals, t - ttr)
-    --             local cand = robots[4] * ttr + next_geodes
-    --             if cand > best then
-    --                 best = cand
-    --                 choices[depth] = { robot, t, t - ttr, ores = next_minerals }
-    --             end
-                best = max(best, robots[4] * ttr + next_geodes)
+            if robot == 4 or robots[robot] < max_costs[robot] then
+                local ttr = time_to_robot(blueprint, robots, minerals, robot)
+        --         print(t, table.concat(robots, ', '), table.concat(minerals, ', '))
+        --         if ttr == 0 then
+        -- --             print(t, table.concat(robots, ', '), table.concat(minerals, ', '))
+        -- --             print(string.format('Can build robot %d in %d time', robot, ttr))
+        --         end
+                if ttr > 0 and t - ttr > 0 then
+                    local next_minerals, next_robots =
+                            mine_minerals_build_robot(blueprint, robots, minerals, robot, ttr)
+                    local next_geodes = produce(next_robots, next_minerals, t - ttr)
+        --             local cand = robots[4] * ttr + next_geodes
+        --             if cand > best then
+        --                 best = cand
+        --                 choices[depth] = { robot, t, t - ttr, ores = next_minerals }
+        --             end
+                    best = max(best, robots[4] * ttr + next_geodes)
+                end
             end
         end
 
@@ -203,12 +223,12 @@ local blueprints = read_blueprints(nmax)
 local quality = 0
 for i = 1, #blueprints do
     local bp = blueprints[i]
-    print('Blueprint:', i)
-    for _, cost in ipairs(bp) do
-        print(table.concat(cost, ', '))
-    end
+--     print('Blueprint:', i)
+--     for _, cost in ipairs(bp) do
+--         print(table.concat(cost, ', '))
+--     end
     local p = max_geodes(bp, time)
-    print(p)
+--     print(p)
     quality = quality + i * p
 end
 -- for k, v in pairs(choices) do
