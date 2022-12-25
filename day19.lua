@@ -168,10 +168,17 @@ local function get_blueprint_max_costs(blueprint)
 end
 
 local function max_geodes(blueprint, max_t)
-    local max_costs = get_blueprint_max_costs(blueprint)
+    local ore_mcost, clay_mcost, obsi_mcost = compat.unpack(get_blueprint_max_costs(blueprint))
 --     print('Max costs:', cj(max_costs))
 
-    local function produce(robots, minerals, t)
+    local ore_orecost = blueprint[1][1]
+    local clay_orecost = blueprint[2][1]
+    local obsi_orecost = blueprint[3][1]
+    local obsi_claycost = blueprint[3][2]
+    local geode_orecost = blueprint[4][1]
+    local geode_obsicost = blueprint[4][3]
+
+    local function produce(ore_robots, clay_robots, obsi_robots, ore, clay, obsi, t)
         if t <= 0 then
             return 0
         end
@@ -183,33 +190,75 @@ local function max_geodes(blueprint, max_t)
         -- it does not make sense to make more robots for a resource than the max cost with
         -- that resource.
 
-        local best = robots[4] * t
-        for robot = 1, #robots do
-            if robot == 4 or robots[robot] < max_costs[robot] then
-                local ttr = time_to_robot(blueprint, robots, minerals, robot)
-        --         print(t, table.concat(robots, ', '), table.concat(minerals, ', '))
-        --         if ttr == 0 then
-        -- --             print(t, table.concat(robots, ', '), table.concat(minerals, ', '))
-        -- --             print(string.format('Can build robot %d in %d time', robot, ttr))
-        --         end
-                if ttr > 0 and t - ttr > 0 then
-                    local next_minerals, next_robots =
-                            mine_minerals_build_robot(blueprint, robots, minerals, robot, ttr)
-                    local next_geodes = produce(next_robots, next_minerals, t - ttr)
-        --             local cand = robots[4] * ttr + next_geodes
-        --             if cand > best then
-        --                 best = cand
-        --                 choices[depth] = { robot, t, t - ttr, ores = next_minerals }
-        --             end
-                    best = max(best, robots[4] * ttr + next_geodes)
-                end
+        -- Unrolled from generic implementation for extra speed!!! Ugly though...
+
+        local best = 0
+
+        -- Decision to make ore robot
+        if ore_robots < ore_mcost then
+            local ttr = math.ceil((ore_orecost - ore) / ore_robots) + 1
+            local t_next = t - ttr
+            if ttr > 0 and t_next > 0 then
+                local p = produce(ore_robots + 1, clay_robots, obsi_robots,
+                                  ore + ttr * ore_robots - ore_orecost,
+                                  clay + ttr * clay_robots,
+                                  obsi + ttr * obsi_robots,
+                                  t_next)
+                best = max(p, best)
+            end
+        end
+
+        -- Decision to make clay robot
+        if clay_robots < clay_mcost then
+            local ttr = math.ceil((clay_orecost - ore) / ore_robots) + 1
+            local t_next = t - ttr
+            if ttr > 0 and t_next > 0 then
+                local p = produce(ore_robots, clay_robots + 1, obsi_robots,
+                                  ore + ttr * ore_robots - clay_orecost,
+                                  clay + ttr * clay_robots,
+                                  obsi + ttr * obsi_robots,
+                                  t_next)
+                best = max(p, best)
+            end
+        end
+
+        -- Decision to make obsi robot
+        if obsi_robots < obsi_mcost and clay_robots > 0 then
+            local to = math.ceil((obsi_orecost - ore) / ore_robots)
+            local tc = math.ceil((obsi_claycost - clay) / clay_robots)
+            local ttr = max(to, tc) + 1
+            local t_next = t - ttr
+            if ttr > 0 and t_next > 0  then
+                local p = produce(ore_robots, clay_robots, obsi_robots + 1,
+                                  ore + ttr * ore_robots - obsi_orecost,
+                                  clay + ttr * clay_robots - obsi_claycost,
+                                  obsi + ttr * obsi_robots,
+                                  t_next)
+                best = max(p, best)
+            end
+        end
+
+        -- And the big one, to make geode robot
+        if obsi_robots > 0 then
+            local t_ore = math.ceil((geode_orecost - ore) / ore_robots)
+            local t_obs = math.ceil((geode_obsicost - obsi) / obsi_robots)
+            local ttr = max(t_ore, t_obs) + 1
+            local t_next = t - ttr
+            if ttr > 0 and t_next > 0 then
+                local p = produce(ore_robots, clay_robots, obsi_robots,
+                                  ore + ttr * ore_robots - geode_orecost,
+                                  clay + ttr * clay_robots,
+                                  obsi + ttr * obsi_robots - geode_obsicost,
+                                  t_next)
+                best = max(p + t_next, best) -- t_next geodes will be produced by this robot!
             end
         end
 
         return best
     end
+        -- 
 
-    return produce({ 1, 0, 0, 0 }, { 0, 0, 0 }, max_t)
+    return produce(1, 0, 0, 0, 0, 0, max_t)
 end
 
 local nmax, time
