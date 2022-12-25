@@ -18,8 +18,14 @@ if ! [ -t 0 ]; then # terminal check, to output differently for README
   echo '```diff'
 fi
 
+if [ "$#" -gt 0 ]; then
+  daylist="$1"
+else
+  daylist=$(seq 1 25)
+fi
+
 ret=0
-for di in {1..25}; do
+for di in $daylist; do
   d=day"$di"
   luafile="$d".lua
   if [ -e "$luafile" ]; then
