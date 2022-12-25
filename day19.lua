@@ -54,6 +54,8 @@ local function max_geodes(blueprint, max_t)
     local geode_orecost = blueprint[4][1]
     local geode_obsicost = blueprint[4][3]
 
+    local memo = {}
+
     local function produce(ore_robots, clay_robots, obsi_robots, ore, clay, obsi, t)
         -- At each step, choose the next robot to produce to decide
         -- Try to choose the next robot to make
@@ -65,6 +67,17 @@ local function max_geodes(blueprint, max_t)
         -- Unrolled from generic implementation for extra speed!!! Ugly though...
 
         local best = 0
+
+--         local enc = string.format('%d_%d_%d_%d_%d_%d_%d', ore_robots,clay_robots,obsi_robots,ore,clay,obsi,t)
+--
+
+        -- Faster than string conversions...
+        local enc = (ore_robots + 100 * (clay_robots + 100 * (obsi_robots + 100 *
+                        (ore + 100 * (clay + 100 * (obsi + 100 * t))))))
+
+        if memo[enc] ~= nil then
+            return memo[enc]
+        end
 
         -- Decision to make ore robot
         if ore_robots < ore_mcost then
@@ -126,6 +139,7 @@ local function max_geodes(blueprint, max_t)
             end
         end
 
+        memo[enc] = best
         return best
     end
         -- 
